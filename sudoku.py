@@ -93,6 +93,8 @@ class Sudoku:
                 # Add to row group
                 gr[i].nodes.append(x)
                 if x.value > 0: gr[i].found.append(x.value)
+                x.gr = gr[i]
+                x.i = i
                 if gr[i].found.count(x.value) > 1:
                     print "Too many numbers in group!"
                     return False
@@ -100,6 +102,8 @@ class Sudoku:
                 # Add to column group
                 gc[j].nodes.append(x)
                 if x.value > 0: gc[j].found.append(x.value)
+                x.gc = gc[j]
+                x.j = j
                 if gc[j].found.count(x.value) > 1:
                     print "Too many numbers in group!"
                     return False
@@ -117,6 +121,8 @@ class Sudoku:
                 elif i < 9 and j < 9: k = 8
                 gs[k].nodes.append(x)
                 if x.value > 0: gs[k].found.append(x.value)
+                x.gs = gs[k]
+                x.k = k
                 if gs[k].found.count(x.value) > 1:
                     print "Too many numbers in group!"
                     return False
@@ -146,7 +152,7 @@ class Sudoku:
                         if f in n.possibility_set: n.possibility_set.remove(f)
                     
                     # Determine if there are any unique possibility values
-                    # Makes much slower, try to optimize this or only call if no progress
+                    # Makes much slower, use for intermediate level
                     if level >= 2:
                         for possible_v in n.possibility_set:
                             possible_v_unique = True
@@ -159,8 +165,89 @@ class Sudoku:
                             if possible_v_unique == True: #Found!
                                 n.possibility_set = [possible_v]
                     
+                    # Do eliminations based on possibility set eliminations, sets of 2
+                    # Makes much slower, used for advanced level-
                     if level >= 3:
-                        
+                        pos_len = len(n.possibility_set)
+                        if pos_len == 2:
+                            for other_n in g.nodes:
+                                if n == other_n: continue
+                                if len(other_n.possibility_set) == 2:
+                                    same = True
+                                    for v in n.possibility_set:
+                                        if other_n.possibility_set.count(v) == 0: same = False
+                                    if same: # Two nodes with same possibility sets of 2
+                                    # remove possibilities from other nodes in group
+                                        for node_cleaning in g.nodes:
+                                            if n == node_cleaning or other_n == node_cleaning: continue
+                                            for v in n.possibility_set:
+                                                if node_cleaning.possibility_set.count(v) > 0: 
+                                                    node_cleaning.possibility_set.remove(v)
+                                                    print "Cleaning..." + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
+                                                        str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ")"
+
+                    
+                    # Row/col and square overlap, so the value in a row/col must be in a square, 
+                    #   eliminating it from the rest of the row/col
+                    if level >= 4:
+                        # For each possibility value
+                        for v in n.possibility_set:
+                            # For the square, check if the value occurs in another row
+                            occurs = False
+                            row_in_sq = set(n.gs.nodes) & set(n.gr.nodes)
+                            for other_sq_n in n.gs.nodes:
+                                if other_sq_n in row_in_sq: continue
+                                if v in other_sq_n.possibility_set:
+                                    occurs = True
+
+                            # If not, row elimination of possibility value from all other nodees in row
+                            if occurs == False:
+                                for node_cleaning in (set(n.gr.nodes) - row_in_sq):
+                                    if node_cleaning.possibility_set.count(v) > 0:
+                                        node_cleaning.possibility_set.remove(v)
+
+                            # For the square, check if the value occurs in another column 
+                            occurs = False
+                            col_in_sq = set(n.gs.nodes) & set(n.gc.nodes)
+                            for other_sq_n in n.gs.nodes:
+                                if other_sq_n in col_in_sq: continue
+                                if v in other_sq_n.possibility_set:
+                                    occurs = True
+
+                            # If not, column elimination of possibility value from all other nodees in column
+                            if occurs == False:
+                                for node_cleaning in (set(n.gc.nodes) - col_in_sq):
+                                    if node_cleaning.possibility_set.count(v) > 0:
+                                        node_cleaning.possibility_set.remove(v)
+
+                    # Do eliminations based on possibility set eliminations, sets of 3
+                    # Makes much slower, used for advanced level
+                    if level >= 5:
+                        pos_len = len(n.possibility_set)
+                        if pos_len == 3:
+                            matching_nodes = [n]
+                            for other_n in g.nodes:
+                                if n == other_n: continue
+                                if len(other_n.possibility_set) == 3:
+                                    same = True
+                                    for v in n.possibility_set:
+                                        if other_n.possibility_set.count(v) == 0: same = False
+                                    if same: # Found another matching node, add to set
+                                        matching_nodes.append(other_n)
+                            if len(matching_nodes) > 3: print "Something weird in triplets, check it out..."
+                            if len(matching_nodes) == 3:
+                                print "Triplet!"
+                                # remove possibilities from other nodes in group
+                                for node_cleaning in g.nodes:
+                                    if node_cleaning in matching_nodes: continue
+                                    for v in n.possibility_set:
+                                        if node_cleaning.possibility_set.count(v) > 0: 
+                                            node_cleaning.possibility_set.remove(v)
+                                            print "Cleaning..." + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
+                                                str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ")"
+
+                    # Brute force try things, not elegant but should always work
+                    #if level >= 10:
 
                     # If the possibility set is reduced to 1, set the value
                     if len(n.possibility_set) == 1:
@@ -191,7 +278,7 @@ if __name__ == "__main__":
     sudoku = Sudoku()
     solved = Grid()
     
-    if True:
+    if False:
         print "Empty grid"
         first_test_grid = Grid()
         first_test_grid.display()
@@ -383,22 +470,60 @@ if __name__ == "__main__":
         solved = sudoku.Solve(row_test_grid, solved, level=2)
         solved.display()
     
-    print "Real 6 - Hardest (11 Star)"
-    row_test_grid = Grid()
-    row_test_grid.contents[0] = [8,0,0, 0,0,0, 0,0,0]
-    row_test_grid.contents[1] = [0,0,3, 6,0,0, 0,0,0]
-    row_test_grid.contents[2] = [0,7,0, 0,9,0, 2,0,0]
-    
-    row_test_grid.contents[3] = [0,5,0, 0,0,7, 0,0,0]
-    row_test_grid.contents[4] = [0,0,0, 0,4,5, 7,0,0]
-    row_test_grid.contents[5] = [0,0,0, 1,0,0, 0,3,0]
-    
-    row_test_grid.contents[6] = [0,0,1, 0,0,0, 0,6,8]
-    row_test_grid.contents[7] = [0,0,8, 5,0,0, 0,1,0]
-    row_test_grid.contents[8] = [0,9,0, 0,0,0, 4,0,0]
-    row_test_grid.display()
-    solved = sudoku.Solve(row_test_grid, solved, level=3, 2)
-    solved.display()
+    if False:
+        # Test doesn't work
+        print "Medley 4 - Induction"
+        row_test_grid = Grid()
+        row_test_grid.contents[0] = [0,0,0, 0,0,0, 0,0,0]
+        row_test_grid.contents[1] = [4,5,6, 0,0,0, 0,0,0]
+        row_test_grid.contents[2] = [0,0,0, 0,0,0, 1,2,3]
+        
+        row_test_grid.contents[3] = [0,0,0, 2,7,0, 0,0,0]
+        row_test_grid.contents[4] = [0,0,0, 3,0,0, 0,0,0]
+        row_test_grid.contents[5] = [0,0,0, 0,0,0, 0,0,0]
+        
+        row_test_grid.contents[6] = [0,0,0, 0,2,7, 0,0,0]
+        row_test_grid.contents[7] = [0,0,0, 0,0,3, 0,0,0]
+        row_test_grid.contents[8] = [0,0,0, 0,0,0, 0,0,0]
+        row_test_grid.display()
+        solved = sudoku.Solve(row_test_grid, solved, level=2, max_passes = 1)
+        solved.display()
+
+    if True:
+        print "Real 6 - Evil"
+        row_test_grid = Grid()
+        row_test_grid.contents[0] = [0,5,0, 2,0,0, 1,0,0]
+        row_test_grid.contents[1] = [0,7,0, 0,3,1, 0,8,6]
+        row_test_grid.contents[2] = [3,0,0, 0,0,0, 0,0,0]
+        
+        row_test_grid.contents[3] = [0,3,0, 1,0,2, 0,0,7]
+        row_test_grid.contents[4] = [0,8,0, 0,0,0, 0,4,0]
+        row_test_grid.contents[5] = [2,0,0, 9,0,3, 0,1,0]
+        
+        row_test_grid.contents[6] = [0,0,0, 0,0,0, 0,0,9]
+        row_test_grid.contents[7] = [4,2,0, 6,7,0, 0,3,0]
+        row_test_grid.contents[8] = [0,0,3, 0,0,5, 0,6,0]
+        row_test_grid.display()
+        solved = sudoku.Solve(row_test_grid, solved, level=5, max_passes = 5)
+        solved.display()
+
+    if False:
+        print "Real 6 - Hardest (11 Star)"
+        row_test_grid = Grid()
+        row_test_grid.contents[0] = [8,0,0, 0,0,0, 0,0,0]
+        row_test_grid.contents[1] = [0,0,3, 6,0,0, 0,0,0]
+        row_test_grid.contents[2] = [0,7,0, 0,9,0, 2,0,0]
+        
+        row_test_grid.contents[3] = [0,5,0, 0,0,7, 0,0,0]
+        row_test_grid.contents[4] = [0,0,0, 0,4,5, 7,0,0]
+        row_test_grid.contents[5] = [0,0,0, 1,0,0, 0,3,0]
+        
+        row_test_grid.contents[6] = [0,0,1, 0,0,0, 0,6,8]
+        row_test_grid.contents[7] = [0,0,8, 5,0,0, 0,1,0]
+        row_test_grid.contents[8] = [0,9,0, 0,0,0, 4,0,0]
+        row_test_grid.display()
+        solved = sudoku.Solve(row_test_grid, solved, level=5, max_passes = 5)
+        solved.display()
     
     exit()
     
@@ -418,6 +543,24 @@ if __name__ == "__main__":
     row_test_grid.display()
     solved = sudoku.Solve(row_test_grid, solved)
     solved.display()
+
+    print ""
+    row_test_grid = Grid()
+    row_test_grid.contents[0] = [8,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[1] = [0,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[2] = [0,0,0, 0,0,0, 0,0,0]
+    
+    row_test_grid.contents[3] = [0,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[4] = [0,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[5] = [0,0,0, 0,0,0, 0,0,0]
+    
+    row_test_grid.contents[6] = [0,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[7] = [0,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[8] = [0,0,0, 0,0,0, 0,0,0]
+    row_test_grid.display()
+    solved = sudoku.Solve(row_test_grid, solved, level=4, max_passes = 2)
+    solved.display()
+
 
 
 
