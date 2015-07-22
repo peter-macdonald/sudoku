@@ -236,7 +236,7 @@ class Sudoku:
                                         matching_nodes.append(other_n)
                             if len(matching_nodes) > 3: print "Something weird in triplets, check it out..."
                             if len(matching_nodes) == 3:
-                                print "Triplet!"
+                                #print "Triplet!"
                                 # remove possibilities from other nodes in group
                                 for node_cleaning in g.nodes:
                                     if node_cleaning in matching_nodes: continue
@@ -375,7 +375,9 @@ class Sudoku:
                                                 node_cleaning.possibility_set.remove(v)
                                                 #print "removing " + str(v) + " for X-wing reasons" 
 
-
+                    # Check for Sword-fish (3x3 x-wing)
+                    if level >= 8:
+                        pass
 
                     # Brute force try things, not elegant but should always work
                     #if level >= 10:
@@ -624,7 +626,7 @@ if __name__ == "__main__":
         solved = sudoku.Solve(row_test_grid, solved, level=2, max_passes = 1)
         solved.display()
 
-    if True:
+    if False:
         print "Real 6 - Evil"
         row_test_grid = Grid()
         row_test_grid.contents[0] = [0,5,0, 2,0,0, 1,0,0]
@@ -640,6 +642,60 @@ if __name__ == "__main__":
         row_test_grid.contents[8] = [0,0,3, 0,0,5, 0,6,0]
         row_test_grid.display()
         solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 1)
+        solved.display()
+
+    if False:
+        print "Real 7 - Excessive"
+        row_test_grid = Grid()
+        row_test_grid.contents[0] = [7,0,0, 8,0,0, 2,0,0]
+        row_test_grid.contents[1] = [0,0,9, 0,0,2, 0,0,0]
+        row_test_grid.contents[2] = [0,1,0, 0,9,0, 0,0,3]
+        
+        row_test_grid.contents[3] = [1,0,0, 2,0,0, 0,5,0]
+        row_test_grid.contents[4] = [0,0,4, 0,3,0, 8,0,0]
+        row_test_grid.contents[5] = [0,9,0, 0,0,1, 0,0,7]
+        
+        row_test_grid.contents[6] = [5,0,0, 0,6,0, 0,8,0]
+        row_test_grid.contents[7] = [0,0,0, 1,0,0, 7,0,0]
+        row_test_grid.contents[8] = [0,0,1, 0,0,4, 0,0,9]
+        row_test_grid.display()
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 2)
+        solved.display()
+
+    if False:
+        print "Real 8 - Egregious"
+        row_test_grid = Grid()
+        row_test_grid.contents[0] = [0,0,0, 0,0,0, 0,0,0]
+        row_test_grid.contents[1] = [0,9,0, 0,6,0, 0,8,0]
+        row_test_grid.contents[2] = [7,0,1, 5,0,0, 3,0,9]
+        
+        row_test_grid.contents[3] = [0,0,2, 0,0,0, 0,0,5]
+        row_test_grid.contents[4] = [0,7,0, 0,8,0, 0,4,0]
+        row_test_grid.contents[5] = [3,0,0, 0,0,0, 1,0,0]
+        
+        row_test_grid.contents[6] = [9,0,5, 0,0,8, 6,0,3]
+        row_test_grid.contents[7] = [0,6,0, 0,2,0, 0,9,0]
+        row_test_grid.contents[8] = [0,0,0, 0,0,0, 0,0,0]
+        row_test_grid.display()
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 1)
+        solved.display()
+
+    if True:
+        print "Real 9 - Excruciating"
+        row_test_grid = Grid()
+        row_test_grid.contents[0] = [0,0,8, 0,0,7, 0,0,6]
+        row_test_grid.contents[1] = [0,5,0, 0,8,0, 0,7,0]
+        row_test_grid.contents[2] = [3,0,0, 6,0,0, 9,0,0]
+        
+        row_test_grid.contents[3] = [5,0,0, 9,0,0, 7,0,0]
+        row_test_grid.contents[4] = [0,1,0, 0,6,0, 0,2,0]
+        row_test_grid.contents[5] = [0,0,6, 0,0,4, 0,0,5]
+        
+        row_test_grid.contents[6] = [0,0,9, 0,0,5, 0,0,7]
+        row_test_grid.contents[7] = [0,2,0, 0,7,0, 0,1,0]
+        row_test_grid.contents[8] = [7,0,0, 1,0,0, 2,0,0]
+        row_test_grid.display()
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 10)
         solved.display()
 
     if True and False:
@@ -681,7 +737,7 @@ if __name__ == "__main__":
 
     print ""
     row_test_grid = Grid()
-    row_test_grid.contents[0] = [8,0,0, 0,0,0, 0,0,0]
+    row_test_grid.contents[0] = [0,0,0, 0,0,0, 0,0,0]
     row_test_grid.contents[1] = [0,0,0, 0,0,0, 0,0,0]
     row_test_grid.contents[2] = [0,0,0, 0,0,0, 0,0,0]
     
