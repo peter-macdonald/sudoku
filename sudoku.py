@@ -278,6 +278,7 @@ class Sudoku:
                                                         #print "Cleaning from triple pair " + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
                                                         #    str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ") on (" + str(n.i+1) + str(n.j+1) + str(n.k+1) + ")"
                                                         #print "Details: " + str(test_n.i+1) + str(test_n.j+1) + str(test_n.k+1) + " " + str(test_n2.i+1) + str(test_n2.j+1) + str(test_n2.k+1)
+                    
                     # Check for X-Wings
                     if level >= 7:
                         # For each number in the possibility set
@@ -321,8 +322,11 @@ class Sudoku:
                                             #print "Two locked pairs! " + str(other_node.j) + str(other_node2.j)
 
                                     if comp_locked_pair:
-                                        print "Found X-wing!" 
-                                        #for node_cleaning in 
+                                        #print "Found X-wing!" 
+                                        for node_cleaning in (set(n.gc.nodes)|set(other_node.gc.nodes))-set([n,other_node,other_n,other_node2]):
+                                            if node_cleaning.possibility_set.count(v) > 0:
+                                                node_cleaning.possibility_set.remove(v)
+                                                #print "removing " + str(v) + " for X-wing reasons"
 
                             # If so, get rid of other occurences of the number in the corresponding col
 
@@ -365,12 +369,17 @@ class Sudoku:
                                             #print "Two locked pairs! " + str(other_node.i) + str(other_node2.i)
 
                                     if comp_locked_pair:
-                                        print "Found X-wing!" 
+                                        #print "Found X-wing!" 
+                                        for node_cleaning in (set(n.gr.nodes)|set(other_node.gr.nodes))-set([n,other_node,other_n,other_node2]):
+                                            if node_cleaning.possibility_set.count(v) > 0:
+                                                node_cleaning.possibility_set.remove(v)
+                                                #print "removing " + str(v) + " for X-wing reasons" 
 
 
 
                     # Brute force try things, not elegant but should always work
                     #if level >= 10:
+                        #pass
 
                     # If the possibility set is reduced to 1, set the value
                     if len(n.possibility_set) == 1:
@@ -630,7 +639,7 @@ if __name__ == "__main__":
         row_test_grid.contents[7] = [4,2,0, 6,7,0, 0,3,0]
         row_test_grid.contents[8] = [0,0,3, 0,0,5, 0,6,0]
         row_test_grid.display()
-        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 2)
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 1)
         solved.display()
 
     if True and False:
@@ -648,7 +657,7 @@ if __name__ == "__main__":
         row_test_grid.contents[7] = [0,0,8, 5,0,0, 0,1,0]
         row_test_grid.contents[8] = [0,9,0, 0,0,0, 4,0,0]
         row_test_grid.display()
-        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 3)
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 1)
         solved.display()
     
     exit()
