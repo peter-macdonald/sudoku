@@ -183,8 +183,8 @@ class Sudoku:
                                             for v in n.possibility_set:
                                                 if node_cleaning.possibility_set.count(v) > 0: 
                                                     node_cleaning.possibility_set.remove(v)
-                                                    print "Cleaning..." + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
-                                                        str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ")"
+                                                    #print "Cleaning from pair " + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
+                                                    #    str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ")"
 
                     
                     # Row/col and square overlap, so the value in a row/col must be in a square, 
@@ -243,8 +243,131 @@ class Sudoku:
                                     for v in n.possibility_set:
                                         if node_cleaning.possibility_set.count(v) > 0: 
                                             node_cleaning.possibility_set.remove(v)
-                                            print "Cleaning..." + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
-                                                str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ")"
+                                            #print "Cleaning from triplet " + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
+                                            #    str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ")"
+                    
+                    # Check for 3 complimentary cells, such as 12 23 13 or 123 23 13
+                    if level >= 6:
+                        if len(n.possibility_set) == 2 or len(n.possibility_set) == 3:
+                            # Generate list of nodes with only 2 possibilities in group
+                            two_possibility_nodes = []
+                            for other_n in g.nodes:
+                                if other_n == n: continue
+                                if len(other_n.possibility_set) == 2 or len(other_n.possibility_set) == 3: 
+                                    two_possibility_nodes.append(other_n)
+                            # Are there enough nodes for a set?
+                            if len(two_possibility_nodes) >= 2:
+                                # Look for two complimentary nodes with current node
+                                for test_n in two_possibility_nodes:
+                                    superset = (set(n.possibility_set)|set(test_n.possibility_set))
+                                    if len(superset) > 3: continue # Make sure first two nodes match and the set is less than or equal to 3
+                                    for test_n2 in set(two_possibility_nodes) - set([test_n]):
+                                        if ( superset & set(test_n2.possibility_set) ) == set(test_n2.possibility_set):
+                                            # Found complimentary three set
+                                            # Remove numbers in set from all other nodes in group
+                                            if set(test_n2.possibility_set) == set(test_n.possibility_set) or \
+                                                set(test_n2.possibility_set) == set(n.possibility_set) or \
+                                                set(test_n.possibility_set) == set(n.possibility_set):
+                                                #print "Weird thing with triples, catch this."
+                                                continue
+                                            for node_cleaning in (set(g.nodes) - set([n,test_n,test_n2])):
+                                                for v in superset:
+                                                    if node_cleaning.possibility_set.count(v) > 0:
+                                                        node_cleaning.possibility_set.remove(v)
+                                                        #print superset
+                                                        #print "Cleaning from triple pair " + str(v) + " from (" + str(node_cleaning.i+1) + "," + \
+                                                        #    str(node_cleaning.j+1) + "," + str(node_cleaning.k+1) + ") on (" + str(n.i+1) + str(n.j+1) + str(n.k+1) + ")"
+                                                        #print "Details: " + str(test_n.i+1) + str(test_n.j+1) + str(test_n.k+1) + " " + str(test_n2.i+1) + str(test_n2.j+1) + str(test_n2.k+1)
+                    # Check for X-Wings
+                    if level >= 7:
+                        # For each number in the possibility set
+                        for v in n.possibility_set:
+                            # Is the node part of a locked pair (the only possible pair of a number in a row)
+                            locked_pair = False
+                            other_count = 0
+                            other_node = None
+                            for other_n in n.gr.nodes:
+                                if other_n == n: continue
+                                if other_n.possibility_set.count(v) > 0: 
+                                    other_count += 1
+                                    other_node = other_n
+                                    locked_pair = True
+                                if other_count > 1: 
+                                    locked_pair = False
+                                    break
+
+                            if locked_pair:
+                                # If so, is there a complimentary locked pair of the same number (forming an X)
+                                comp_locked_pair = False
+                                for other_n in n.gc.nodes:
+                                    if other_n == n: continue
+                                    if other_n.possibility_set.count(v) == 0: continue
+                                    other_count = 0
+                                    locked_pair2 = False
+                                    other_node2 = None
+                                    for other_n2 in other_n.gr.nodes:
+                                        if other_n2 == other_n: continue
+                                        if other_n2.possibility_set.count(v) == 0: continue
+                                        other_count += 1
+                                        other_node2 = other_n2
+                                        locked_pair2 = True
+                                        if other_count > 1: 
+                                            locked_pair2 = False
+                                            break
+                                    
+                                    if locked_pair2 == True: # Found locked pair, check if it's complimentary
+                                        if other_node.j == other_node2.j:
+                                            comp_locked_pair = True
+                                            #print "Two locked pairs! " + str(other_node.j) + str(other_node2.j)
+
+                                    if comp_locked_pair:
+                                        print "Found X-wing!" 
+                                        #for node_cleaning in 
+
+                            # If so, get rid of other occurences of the number in the corresponding col
+
+                            # Repeat for columns
+                            locked_pair = False
+                            other_count = 0
+                            other_node = None
+                            for other_n in n.gc.nodes:
+                                if other_n == n: continue
+                                if other_n.possibility_set.count(v) > 0: 
+                                    other_count += 1
+                                    other_node = other_n
+                                    locked_pair = True
+                                if other_count > 1: 
+                                    locked_pair = False
+                                    break
+
+                            if locked_pair:
+                                # If so, is there a complimentary locked pair of the same number (forming an X)
+                                comp_locked_pair = False
+                                for other_n in n.gr.nodes:
+                                    if other_n == n: continue
+                                    if other_n.possibility_set.count(v) == 0: continue
+                                    other_count = 0
+                                    locked_pair2 = False
+                                    other_node2 = None
+                                    for other_n2 in other_n.gc.nodes:
+                                        if other_n2 == other_n: continue
+                                        if other_n2.possibility_set.count(v) == 0: continue
+                                        other_count += 1
+                                        other_node2 = other_n2
+                                        locked_pair2 = True
+                                        if other_count > 1: 
+                                            locked_pair2 = False
+                                            break
+                                    
+                                    if locked_pair2 == True: # Found locked pair, check if it's complimentary
+                                        if other_node.i == other_node2.i:
+                                            comp_locked_pair = True
+                                            #print "Two locked pairs! " + str(other_node.i) + str(other_node2.i)
+
+                                    if comp_locked_pair:
+                                        print "Found X-wing!" 
+
+
 
                     # Brute force try things, not elegant but should always work
                     #if level >= 10:
@@ -266,8 +389,11 @@ class Sudoku:
 
         # Update grid with solved nodes
         for i in range(9):
+            line = ""
             for j in range(9):
                 grid_out.contents[i][j] = nodes[i][j].value
+                line += str(nodes[i][j].possibility_set) + "\t"
+            #print line
 
         return grid_out
 
@@ -504,10 +630,10 @@ if __name__ == "__main__":
         row_test_grid.contents[7] = [4,2,0, 6,7,0, 0,3,0]
         row_test_grid.contents[8] = [0,0,3, 0,0,5, 0,6,0]
         row_test_grid.display()
-        solved = sudoku.Solve(row_test_grid, solved, level=5, max_passes = 5)
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 2)
         solved.display()
 
-    if False:
+    if True and False:
         print "Real 6 - Hardest (11 Star)"
         row_test_grid = Grid()
         row_test_grid.contents[0] = [8,0,0, 0,0,0, 0,0,0]
@@ -522,7 +648,7 @@ if __name__ == "__main__":
         row_test_grid.contents[7] = [0,0,8, 5,0,0, 0,1,0]
         row_test_grid.contents[8] = [0,9,0, 0,0,0, 4,0,0]
         row_test_grid.display()
-        solved = sudoku.Solve(row_test_grid, solved, level=5, max_passes = 5)
+        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 3)
         solved.display()
     
     exit()
@@ -558,7 +684,7 @@ if __name__ == "__main__":
     row_test_grid.contents[7] = [0,0,0, 0,0,0, 0,0,0]
     row_test_grid.contents[8] = [0,0,0, 0,0,0, 0,0,0]
     row_test_grid.display()
-    solved = sudoku.Solve(row_test_grid, solved, level=4, max_passes = 2)
+    solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 2)
     solved.display()
 
 
