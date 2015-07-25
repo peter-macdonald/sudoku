@@ -96,7 +96,7 @@ class Sudoku:
                 x.gr = gr[i]
                 x.i = i
                 if gr[i].found.count(x.value) > 1:
-                    print "Too many numbers in group!"
+                    #print "Too many numbers in group!"
                     return False
                 
                 # Add to column group
@@ -105,7 +105,7 @@ class Sudoku:
                 x.gc = gc[j]
                 x.j = j
                 if gc[j].found.count(x.value) > 1:
-                    print "Too many numbers in group!"
+                    #print "Too many numbers in group!"
                     return False
             
                 # Add to square group
@@ -124,7 +124,7 @@ class Sudoku:
                 x.gs = gs[k]
                 x.k = k
                 if gs[k].found.count(x.value) > 1:
-                    print "Too many numbers in group!"
+                    #print "Too many numbers in group!"
                     return False
             
             # Add groups to main group structure
@@ -134,6 +134,7 @@ class Sudoku:
                 groups.append(gs[x])
         
         ### Solve ###
+        done = False
         for pass_i in range(max_passes):
             # For each node in each group
             for g in groups:
@@ -328,8 +329,6 @@ class Sudoku:
                                                 node_cleaning.possibility_set.remove(v)
                                                 #print "removing " + str(v) + " for X-wing reasons"
 
-                            # If so, get rid of other occurences of the number in the corresponding col
-
                             # Repeat for columns
                             locked_pair = False
                             other_count = 0
@@ -377,11 +376,157 @@ class Sudoku:
 
                     # Check for Sword-fish (3x3 x-wing)
                     if level >= 8:
-                        pass
+                        for v in n.possibility_set:
+                            # Is the node part of a locked triplet
+                            locked_trip = False
+                            other_count = 0
+                            other_nodes = []
+                            for other_n in n.gr.nodes:
+                                if other_n == n: continue
+                                if other_n.possibility_set.count(v) == 0: continue
+                                other_count += 1
+                                other_nodes.append(other_n)
+                                if other_count == 2: locked_trip = True
+                                if other_count > 2: 
+                                    locked_trip = False
+                                    break
+
+                            if locked_trip: # Look for 2 complementary locked triplets
+                                first_trip = other_nodes # Save the first locked triplet
+                                first_trip.append(n)
+                                # First, look for all
+                                other_trips = []
+                                for n2 in n.gc.nodes:
+                                    if n2 == n: continue
+                                    if n2.possibility_set.count(v) == 0: continue
+                                    # Found node with same number possible, look for locked triplet
+                                    locked_trip = False
+                                    other_count = 0
+                                    other_nodes = []
+                                    for other_n in n2.gr.nodes:
+                                        if other_n == n2: continue
+                                        if other_n.possibility_set.count(v) == 0: continue
+                                        other_count += 1
+                                        other_nodes.append(other_n)
+                                        if other_count == 2: locked_trip = True
+                                        if other_count > 2: 
+                                            locked_trip = False
+                                            break
+                                    if locked_trip: # found another parallel locked triplet!
+                                        other_nodes.append(n2)
+                                        other_trips.append(other_nodes)
+
+                                # Check if any of the trips are complimentary
+                                comp_trip_count = 0
+                                comp_trips = []
+                                first_trip_j_set = set([])
+                                for node in first_trip:
+                                    first_trip_j_set |= set([node.j]) 
+                                for trip in other_trips:
+                                    trip_j_set = set([])
+                                    for node in trip:
+                                        trip_j_set |= set([node.j])
+                                    # Check if js are the same
+                                    if first_trip_j_set & trip_j_set == first_trip_j_set: 
+                                        comp_trip_count += 1
+                                        comp_trips.append(trip)
+
+                                if len(comp_trips) == 2: # 2 complimentary triplets, we have swordfish!
+                                    #print "Sword-fish found!"
+                                    set_of_nodes_to_clean = (set(first_trip[0].gc.nodes)|set(first_trip[1].gc.nodes)|set(first_trip[2].gc.nodes))
+                                    (set(first_trip)|set(comp_trips[0])|set(comp_trips[1]))
+                                    for node_cleaning in set_of_nodes_to_clean:
+                                        if node_cleaning.possibility_set.count(v) > 0:
+                                            node_cleaning.possibility_set.remove(v)
+                                            #print "Cleaning fish"
+
+
+                            # Again, other direction
+                            # Is the node part of a locked triplet
+                            locked_trip = False
+                            other_count = 0
+                            other_nodes = []
+                            for other_n in n.gc.nodes:
+                                if other_n == n: continue
+                                if other_n.possibility_set.count(v) == 0: continue
+                                other_count += 1
+                                other_nodes.append(other_n)
+                                if other_count == 2: locked_trip = True
+                                if other_count > 2: 
+                                    locked_trip = False
+                                    break
+
+                            if locked_trip: # Look for 2 complementary locked triplets
+                                first_trip = other_nodes # Save the first locked triplet
+                                first_trip.append(n)
+                                # First, look for all
+                                other_trips = []
+                                for n2 in n.gr.nodes:
+                                    if n2 == n: continue
+                                    if n2.possibility_set.count(v) == 0: continue
+                                    # Found node with same number possible, look for locked triplet
+                                    locked_trip = False
+                                    other_count = 0
+                                    other_nodes = []
+                                    for other_n in n2.gc.nodes:
+                                        if other_n == n2: continue
+                                        if other_n.possibility_set.count(v) == 0: continue
+                                        other_count += 1
+                                        other_nodes.append(other_n)
+                                        if other_count == 2: locked_trip = True
+                                        if other_count > 2: 
+                                            locked_trip = False
+                                            break
+                                    if locked_trip: # found another parallel locked triplet!
+                                        other_nodes.append(n2)
+                                        other_trips.append(other_nodes)
+
+                                # Check if any of the trips are complimentary
+                                comp_trip_count = 0
+                                comp_trips = []
+                                first_trip_i_set = set([])
+                                for node in first_trip:
+                                    first_trip_i_set |= set([node.i]) 
+                                for trip in other_trips:
+                                    trip_i_set = set([])
+                                    for node in trip:
+                                        trip_i_set |= set([node.i])
+                                    # Check if js are the same
+                                    if first_trip_i_set & trip_i_set == first_trip_i_set: 
+                                        comp_trip_count += 1
+                                        comp_trips.append(trip)
+
+                                if len(comp_trips) >= 2: # At least 2 complimentary triplets, we have swordfish!
+                                    #print "Sword-fish found!"
+                                    set_of_nodes_to_clean = (set(first_trip[0].gr.nodes)|set(first_trip[1].gr.nodes)|set(first_trip[2].gr.nodes))
+                                    (set(first_trip)|set(comp_trips[0])|set(comp_trips[1]))
+                                    for node_cleaning in set_of_nodes_to_clean:
+                                        if node_cleaning.possibility_set.count(v) > 0:
+                                            node_cleaning.possibility_set.remove(v)
+
+
+                                
 
                     # Brute force try things, not elegant but should always work
-                    #if level >= 10:
-                        #pass
+                    # Would be VERY SLOW, do after every other algorithm
+                    # Only do if one of the previous steps hasn't solved it already
+                    if level >= 100 and len(n.possibility_set) > 1:
+                        # Try to solve with each number of the possibility set itteratively
+                        for v_try in n.possibility_set:
+                            n.value = v_try
+                            # Generate grid object from existing nodes with guess and recursively call Solve
+                            # This is a slow way of doing it, but requires fewer setup modifications
+                            for i in range(9):
+                                for j in range(9):
+                                    grid_out.contents[i][j] = nodes[i][j].value
+                            grid_out.display()
+                            ret = self.Solve(grid_out,grid_out,level=level,max_passes=max_passes-1)
+                            if ret == False: continue # Not found, try next number
+                            n.possibility_set = [v_try]
+                            #grid_out.display()
+                        n.value = 0
+                    #grid_in.display()
+
 
                     # If the possibility set is reduced to 1, set the value
                     if len(n.possibility_set) == 1:
@@ -406,7 +551,7 @@ class Sudoku:
                 line += str(nodes[i][j].possibility_set) + "\t"
             #print line
 
-        return grid_out
+        return done
 
 
 
@@ -695,7 +840,7 @@ if __name__ == "__main__":
         row_test_grid.contents[7] = [0,2,0, 0,7,0, 0,1,0]
         row_test_grid.contents[8] = [7,0,0, 1,0,0, 2,0,0]
         row_test_grid.display()
-        solved = sudoku.Solve(row_test_grid, solved, level=100, max_passes = 10)
+        sudoku.Solve(row_test_grid, solved, level=100, max_passes = 2)
         solved.display()
 
     if True and False:
